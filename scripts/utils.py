@@ -106,7 +106,7 @@ class FiveDOFRobot:
 
         # Denavit-Hartenberg parameters and transformation matrices
 
-        self.H05 = np.matrix(
+        self.H05 = np.array(
             [[0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0]]
         )  # Denavit-Hartenberg parameters (theta, d, a, alpha)
         # Transformation matrices
