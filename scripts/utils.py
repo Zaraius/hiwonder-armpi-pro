@@ -59,6 +59,78 @@ class EndEffector:
     rotz: float = 0.0
 
 
+
+def jacobian_v(self):
+        """
+        blah blah
+
+
+        """
+        # if theta is None:
+        # theta = self.theta
+
+        # Initialize a 3x5 matrix for jacobian
+        # for first col, take offset vector from H05, and put in first col of matrix
+        # for next col, calc offset to be H05 offset - offset between H01
+        # continue doing this for each offset
+        # combine all collumns into jacobian matrix
+        # return jacobian
+
+        J = np.empty((3, 5))
+
+        t1 = self.H05[0:3, 3]
+        r1 = np.array([0, 0, 1])
+        j1 = np.cross(r1, t1)
+        J[0:3, 0] = j1
+
+        t2 = self.H05[0:3, 3] - self.H_01[0:3, 3]
+        r2 = self.H_01[0:3, 2]
+        j2 = np.cross(r2, t2)
+        J[0:3, 1] = j2
+
+        t3 = self.H05[0:3, 3] - (self.H_01 @ self.H_12)[0:3, 3]
+        r3 = (self.H_01 @ self.H_12)[0:3, 2]
+        j3 = np.cross(r3, t3)
+        J[0:3, 2] = j3
+
+        t4 = self.H05[0:3, 3] - (self.H_01 @ self.H_12 @ self.H_23)[0:3, 3]
+        r4 = (self.H_01 @ self.H_12 @ self.H_23)[0:3, 2]
+        j4 = np.cross(r4, t4)
+        J[0:3, 3] = j4
+
+        t5 = self.H05[0:3, 3] - (self.H_01 @ self.H_12 @ self.H_23 @ self.H_34)[0:3, 3]
+        r5 = (self.H_01 @ self.H_12 @ self.H_23 @ self.H_34)[0:3, 2]
+        j5 = np.cross(r5, t5)
+        J[0:3, 4] = j5
+        # offset_12 = self.H_12[0:3, 3]
+        # r3 = r2 - offset_12
+        # J[0:3, 2] = r3
+
+        # offset_23 = self.H_23[0:3, 3]
+        # r4 = r3 - offset_23
+        # J[0:3, 1] = r4
+
+        # offset_34 = self.H_34[0:3, 3]
+        # r5 = r4 - offset_34
+        # J[0:3, 0] = r5
+
+        return J
+
+def inverse_jacobian(self):
+    """
+    Creates the inverse jacobian matrix based on the jacobian.
+    Returns:
+        the pseudo inverse of the jacobian matrix
+    """
+    J = self.jacobian_v()
+    # print(f"J {J} inv {np.linalg.pinv(J)}")
+    # Calculate pinv of the jacobian
+    lambda_constant = 0.01
+    J_inv = np.transpose(J) @ np.linalg.inv(
+        ((J @ np.transpose(J)) + lambda_constant**2 * np.identity(3))
+    )
+    return J_inv
+
 def rotm_to_euler(R) -> tuple:
     """Converts a rotation matrix to Euler angles (roll, pitch, yaw).
 

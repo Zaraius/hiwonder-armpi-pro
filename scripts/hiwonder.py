@@ -31,6 +31,17 @@ class HiwonderRobot:
         self.joint_control_delay = 0.2 # secs
         self.speed_control_delay = 0.2
 
+        self.H05 = np.array(
+            [[0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0]]
+        )  # Denavit-Hartenberg parameters (theta, d, a, alpha)
+        # Transformation matrices
+
+        self.H_01 = np.empty((4, 4))
+        self.H_12 = np.empty((4, 4))
+        self.H_23 = np.empty((4, 4))
+        self.H_34 = np.empty((4, 4))
+        self.H_45 = np.empty((4, 4))
+
         self.move_to_home_position()
 
     # -------------------------------------------------------------
@@ -94,8 +105,13 @@ class HiwonderRobot:
 
         ######################################################################
         # insert your code for finding "thetalist_dot"
+        self.H_01 = self.joint_values[0]
+        self.H_12 = self.joint_values[1]
+        self.H_23 = self.joint_values[2]
+        self.H_34 = self.joint_values[3]
+        self.H_45 = self.joint_values[4]
 
-        thetalist_dot = [0]*5
+        thetalist_dot = ut.inverse_jacobian() @ np.array(vel)
 
         ######################################################################
 
