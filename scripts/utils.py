@@ -6,9 +6,11 @@ from functools import singledispatch
 
 PI = 3.1415926535897932384
 
+
 @dataclass
 class State:
-    """This dataclass represents the system state (pos and vel) """
+    """This dataclass represents the system state (pos and vel)"""
+
     x: float = 0.0
     y: float = 0.0
     theta: float = 0.0
@@ -19,7 +21,8 @@ class State:
 
 @dataclass
 class Controls:
-    """This dataclass represents the system controls """
+    """This dataclass represents the system controls"""
+
     v: float = 0.0
     w: float = 0.0
     vx: float = 0.0
@@ -28,7 +31,8 @@ class Controls:
 
 @dataclass
 class GamepadCmds:
-    """This dataclass represents the gamepad commands """
+    """This dataclass represents the gamepad commands"""
+
     base_vx: int = 0
     base_vy: int = 0
     base_w: int = 0
@@ -42,6 +46,7 @@ class GamepadCmds:
     arm_j5: int = 0
     arm_ee: int = 0
     arm_home: int = 0
+
 
 def print_dataclass(obj):
     print("------------------------------------")
@@ -59,8 +64,67 @@ class EndEffector:
     rotz: float = 0.0
 
 
+class FiveDOFRobot:
+    """
+    A class to represent a 5-DOF robotic arm with kinematics calculations, including
+    forward kinematics, inverse kinematics, velocity kinematics, and Jacobian computation.
 
-def jacobian_v(self):
+    Attributes:
+        l1, l2, l3, l4, l5: Link lengths of the robotic arm.
+        theta: List of joint angles in radians.
+        theta_limits: Joint limits for each joint.
+        ee: End-effector object for storing the position and orientation of the end-effector.
+        num_dof: Number of degrees of freedom (5 in this case).
+        points: List storing the positions of the robot joints.
+        DH: Denavit-Hartenberg parameters for each joint.
+        T: Transformation matrices for each joint.
+    """
+
+    def __init__(self):
+        """Initialize the robot parameters and joint limits."""
+        # Link lengths
+        self.l1, self.l2, self.l3, self.l4, self.l5 = 0.30, 0.15, 0.18, 0.15, 0.12
+
+        # Joint angles (initialized to zero)
+        self.theta = [0, 0, 0, 0, 0]
+
+        # Joint limits (in radians)
+        self.theta_limits = [
+            [-np.pi, np.pi],
+            [-np.pi / 3, np.pi],
+            [-np.pi + np.pi / 12, np.pi - np.pi / 4],
+            [-np.pi + np.pi / 12, np.pi - np.pi / 12],
+            [-np.pi, np.pi],
+        ]
+
+        # End-effector object
+        self.ee = EndEffector()
+
+        # Robot's points
+        self.num_dof = 5
+        self.points = [None] * (self.num_dof + 1)
+
+        # Denavit-Hartenberg parameters and transformation matrices
+
+        self.H05 = np.matrix(
+            [[0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0]]
+        )  # Denavit-Hartenberg parameters (theta, d, a, alpha)
+        # Transformation matrices
+
+        self.H_01 = np.empty((4, 4))
+        self.H_12 = np.empty((4, 4))
+        self.H_23 = np.empty((4, 4))
+        self.H_34 = np.empty((4, 4))
+        self.H_45 = np.empty((4, 4))
+
+        self.T = np.zeros((self.num_dof, 4, 4))
+        # print(self.T)
+
+        ########################################
+
+        ########################################
+
+    def jacobian_v(self):
         """
         blah blah
 
@@ -116,20 +180,24 @@ def jacobian_v(self):
 
         return J
 
-def inverse_jacobian(self):
-    """
-    Creates the inverse jacobian matrix based on the jacobian.
-    Returns:
-        the pseudo inverse of the jacobian matrix
-    """
-    J = self.jacobian_v()
-    # print(f"J {J} inv {np.linalg.pinv(J)}")
-    # Calculate pinv of the jacobian
-    lambda_constant = 0.01
-    J_inv = np.transpose(J) @ np.linalg.inv(
-        ((J @ np.transpose(J)) + lambda_constant**2 * np.identity(3))
-    )
-    return J_inv
+    def inverse_jacobian(self):
+        """
+        Creates the inverse jacobian matrix based on the jacobian.
+
+        Returns:
+            the pseudo inverse of the jacobian matrix
+        """
+        J = self.jacobian_v()
+        # print(f"J {J} inv {np.linalg.pinv(J)}")
+
+        # Calculate pinv of the jacobian
+        lambda_constant = 0.01
+        J_inv = np.transpose(J) @ np.linalg.inv(
+            ((J @ np.transpose(J)) + lambda_constant**2 * np.identity(3))
+        )
+
+        return J_inv
+
 
 def rotm_to_euler(R) -> tuple:
     """Converts a rotation matrix to Euler angles (roll, pitch, yaw).
@@ -139,18 +207,18 @@ def rotm_to_euler(R) -> tuple:
 
     Returns:
         tuple: Roll, pitch, and yaw angles (in radians).
-    
+
     Reference:
         Based on the method described at:
         https://motion.cs.illinois.edu/software/klampt/latest/pyklampt_docs/_modules/klampt/math/so3.html
     """
-    r31 = R[2,0] # -sin(p)
-    r11 = R[0,0] # cos(r)*cos(p)
-    r33 = R[2,2] # cos(p)*cos(y)
-    r12 = R[0,1] # -sin(r)*cos(y) + cos(r)*sin(p)*sin(y)
+    r31 = R[2, 0]  # -sin(p)
+    r11 = R[0, 0]  # cos(r)*cos(p)
+    r33 = R[2, 2]  # cos(p)*cos(y)
+    r12 = R[0, 1]  # -sin(r)*cos(y) + cos(r)*sin(p)*sin(y)
 
     # compute pitch
-        # condition r31 to the range of asin [-1, 1]
+    # condition r31 to the range of asin [-1, 1]
     r31 = min(1.0, max(r31, -1.0))
     p = -math.asin(r31)
     cosp = math.cos(p)
@@ -165,22 +233,21 @@ def rotm_to_euler(R) -> tuple:
         # condition cosy to the range of acos [-1, 1]
         cosy = min(1.0, max(cosy, -1.0))
         y = math.acos(cosy)
-    
+
     else:
         # pitch (p) is close to 90 deg, i.e. cos(p) = 0.0
         # there are an infinitely many solutions, so we set y = 0
         y = 0
         # r12: -sin(r)*cos(y) + cos(r)*sin(p)*sin(y) -> -sin(r)
-            # condition r12 to the range of asin [-1, 1]
+        # condition r12 to the range of asin [-1, 1]
         r12 = min(1.0, max(r12, -1.0))
         r = -math.asin(r12)
-    
-    
-    r11 = R[0,0] if abs(R[0,0]) > 1e-7 else 0.0
-    r21 = R[1,0] if abs(R[1,0]) > 1e-7 else 0.0
-    r32 = R[2,1] if abs(R[2,1]) > 1e-7 else 0.0
-    r33 = R[2,2] if abs(R[2,2]) > 1e-7 else 0.0
-    r31 = R[2,0] if abs(R[2,0]) > 1e-7 else 0.0
+
+    r11 = R[0, 0] if abs(R[0, 0]) > 1e-7 else 0.0
+    r21 = R[1, 0] if abs(R[1, 0]) > 1e-7 else 0.0
+    r32 = R[2, 1] if abs(R[2, 1]) > 1e-7 else 0.0
+    r33 = R[2, 2] if abs(R[2, 2]) > 1e-7 else 0.0
+    r31 = R[2, 0] if abs(R[2, 0]) > 1e-7 else 0.0
 
     # print(f"R : {R}")
 
@@ -188,15 +255,15 @@ def rotm_to_euler(R) -> tuple:
         # print("special case")
         # pitch is close to 90 deg, i.e. cos(pitch) = 0.0
         # there are an infinitely many solutions, so we set yaw = 0
-        pitch, yaw = PI/2, 0.0
+        pitch, yaw = PI / 2, 0.0
         # r12: -sin(r)*cos(y) + cos(r)*sin(p)*sin(y) -> -sin(r)
-            # condition r12 to the range of asin [-1, 1]
+        # condition r12 to the range of asin [-1, 1]
         r12 = min(1.0, max(r12, -1.0))
         roll = -math.asin(r12)
     else:
-        yaw = math.atan2(r32, r33)        
+        yaw = math.atan2(r32, r33)
         roll = math.atan2(r21, r11)
-        denom = math.sqrt(r11 ** 2 + r21 ** 2)
+        denom = math.sqrt(r11**2 + r21**2)
         pitch = math.atan2(-r31, denom)
 
     return roll, pitch, yaw
@@ -212,12 +279,24 @@ def dh_to_matrix(dh_params: list) -> np.ndarray:
         np.ndarray: A 4x4 transformation matrix.
     """
     theta, d, a, alpha = dh_params
-    return np.array([
-        [cos(theta), -sin(theta) * cos(alpha), sin(theta) * sin(alpha), a * cos(theta)],
-        [sin(theta), cos(theta) * cos(alpha), -cos(theta) * sin(alpha), a * sin(theta)],
-        [0, sin(alpha), cos(alpha), d],
-        [0, 0, 0, 1]
-    ])
+    return np.array(
+        [
+            [
+                cos(theta),
+                -sin(theta) * cos(alpha),
+                sin(theta) * sin(alpha),
+                a * cos(theta),
+            ],
+            [
+                sin(theta),
+                cos(theta) * cos(alpha),
+                -cos(theta) * sin(alpha),
+                a * sin(theta),
+            ],
+            [0, sin(alpha), cos(alpha), d],
+            [0, 0, 0, 1],
+        ]
+    )
 
 
 def euler_to_rotm(rpy: tuple) -> np.ndarray:
@@ -229,15 +308,27 @@ def euler_to_rotm(rpy: tuple) -> np.ndarray:
     Returns:
         np.ndarray: A 3x3 rotation matrix.
     """
-    R_x = np.array([[1, 0, 0],
-                    [0, math.cos(rpy[2]), -math.sin(rpy[2])],
-                    [0, math.sin(rpy[2]), math.cos(rpy[2])]])
-    R_y = np.array([[math.cos(rpy[1]), 0, math.sin(rpy[1])],
-                    [0, 1, 0],
-                    [-math.sin(rpy[1]), 0, math.cos(rpy[1])]])
-    R_z = np.array([[math.cos(rpy[0]), -math.sin(rpy[0]), 0],
-                    [math.sin(rpy[0]), math.cos(rpy[0]), 0],
-                    [0, 0, 1]])
+    R_x = np.array(
+        [
+            [1, 0, 0],
+            [0, math.cos(rpy[2]), -math.sin(rpy[2])],
+            [0, math.sin(rpy[2]), math.cos(rpy[2])],
+        ]
+    )
+    R_y = np.array(
+        [
+            [math.cos(rpy[1]), 0, math.sin(rpy[1])],
+            [0, 1, 0],
+            [-math.sin(rpy[1]), 0, math.cos(rpy[1])],
+        ]
+    )
+    R_z = np.array(
+        [
+            [math.cos(rpy[0]), -math.sin(rpy[0]), 0],
+            [math.sin(rpy[0]), math.cos(rpy[0]), 0],
+            [0, 0, 1],
+        ]
+    )
     return R_z @ R_y @ R_x
 
 
@@ -257,6 +348,7 @@ class SimData:
         vx (List[float]): x-component of linear velocity over time.
         vy (List[float]): y-component of linear velocity over time.
     """
+
     x: List[float] = field(default_factory=list)
     y: List[float] = field(default_factory=list)
     theta: List[float] = field(default_factory=list)
