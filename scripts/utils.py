@@ -140,6 +140,14 @@ class FiveDOFRobot:
         # combine all collumns into jacobian matrix
         # return jacobian
 
+        self.H_01 = dh_to_matrix([self.theta[0], self.l1, 0, -PI / 2])
+        self.H_12 = dh_to_matrix([self.theta[1] - PI / 2, 0, self.l2, PI])
+        self.H_23 = dh_to_matrix([self.theta[2], 0, self.l3, PI])
+        self.H_34 = dh_to_matrix([self.theta[3] + PI / 2, 0, 0, PI / 2])
+        self.H_45 = dh_to_matrix([self.theta[4], self.l4 + self.l5, 0, 0])
+
+        self.H05 = self.H_01 @ self.H_12 @ self.H_23 @ self.H_34 @ self.H_45
+
         J = np.empty((3, 5))
 
         t1 = self.H05[0:3, 3]
