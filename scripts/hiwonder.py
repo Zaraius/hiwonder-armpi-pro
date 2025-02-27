@@ -106,7 +106,7 @@ class HiwonderRobot:
         bot = ut.FiveDOFRobot()
 
         bot.theta = self.joint_values[:-1]
-
+        print(f"{bot.inverse_jacobian=}")
         thetalist_dot = bot.inverse_jacobian() @ np.array(vel)
 
         ######################################################################
