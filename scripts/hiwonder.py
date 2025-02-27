@@ -119,7 +119,7 @@ class HiwonderRobot:
 
         # Update joint angles
         dt = 0.5  # Fixed time step
-        K = 1600  # mapping gain for individual joint control
+        K = 3200  # mapping gain for individual joint control
         new_thetalist = [0.0] * 6
 
         # linear velocity control
