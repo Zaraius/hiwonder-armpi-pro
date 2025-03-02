@@ -232,6 +232,7 @@ class FiveDOFRobot:
             the pseudo inverse of the jacobian matrix
         """
         J = self.jacobian_v()
+        return np.linalg.pinv(J)
         # print(f"J {J} inv {np.linalg.pinv(J)}")
 
         # Calculate pinv of the jacobian
@@ -240,7 +241,7 @@ class FiveDOFRobot:
             ((J @ np.transpose(J)) + lambda_constant**2 * np.identity(5))
         )
 
-        return J_inv
+        # return J_inv
 
 
 def rotm_to_euler(R) -> tuple:
