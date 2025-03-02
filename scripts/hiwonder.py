@@ -107,7 +107,10 @@ class HiwonderRobot:
 
         bot.theta = self.joint_values[:-1]
         print(f"inverse jacobian: {bot.inverse_jacobian()}")
-        thetalist_dot = np.rad2deg(bot.inverse_jacobian()) @ np.array(vel)
+        # thetalist_dot = np.rad2deg(bot.inverse_jacobian()) @ np.array(vel)
+
+        thetalist_dot = np.dot(np.array(vel), bot.inverse_jacobian())
+        thetalist_dot = np.append(thetalist_dot, 0.0)
         # thetalist_dot = np.rad2deg(thetalist_dot)
 
         ######################################################################
