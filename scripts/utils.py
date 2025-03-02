@@ -237,7 +237,7 @@ class FiveDOFRobot:
         # Calculate pinv of the jacobian
         lambda_constant = 0.01
         J_inv = np.transpose(J) @ np.linalg.inv(
-            ((J @ np.transpose(J)) + lambda_constant**2 * np.identity(3))
+            ((J @ np.transpose(J)) + lambda_constant**2 * np.identity(5))
         )
 
         return J_inv
