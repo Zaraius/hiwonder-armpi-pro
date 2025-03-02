@@ -141,40 +141,66 @@ class FiveDOFRobot:
         # combine all collumns into jacobian matrix
         # return jacobian
 
-        self.H_01 = dh_to_matrix([self.theta[0], self.l1, 0, -90])
-        self.H_12 = dh_to_matrix([self.theta[1] -90, 0, self.l2, 180])
-        self.H_23 = dh_to_matrix([self.theta[2], 0, self.l3, 180])
-        self.H_34 = dh_to_matrix([self.theta[3] + 90, 0, 0, 90])
-        self.H_45 = dh_to_matrix([self.theta[4], self.l4 + self.l5, 0, 0])
+        # self.H_01 = dh_to_matrix([self.theta[0], self.l1, 0, -90])
+        # self.H_12 = dh_to_matrix([self.theta[1] -90, 0, self.l2, 180])
+        # self.H_23 = dh_to_matrix([self.theta[2], 0, self.l3, 180])
+        # self.H_34 = dh_to_matrix([self.theta[3] + 90, 0, 0, 90])
+        # self.H_45 = dh_to_matrix([self.theta[4], self.l4 + self.l5, 0, 0])
 
-        self.H05 = self.H_01 @ self.H_12 @ self.H_23 @ self.H_34 @ self.H_45
+        # self.H05 = self.H_01 @ self.H_12 @ self.H_23 @ self.H_34 @ self.H_45
 
-        J = np.empty((3, 5))
+        # J = np.empty((3, 5))
 
-        t1 = self.H05[0:3, 3]
-        r1 = np.array([0, 0, 1])
-        j1 = np.cross(r1, t1)
-        J[0:3, 0] = j1
+        # t1 = self.H05[0:3, 3]
+        # r1 = np.array([0, 0, 1])
+        # j1 = np.cross(r1, t1)
+        # J[0:3, 0] = j1
 
-        t2 = self.H05[0:3, 3] - self.H_01[0:3, 3]
-        r2 = self.H_01[0:3, 2]
-        j2 = np.cross(r2, t2)
-        J[0:3, 1] = j2
+        # t2 = self.H05[0:3, 3] - self.H_01[0:3, 3]
+        # r2 = self.H_01[0:3, 2]
+        # j2 = np.cross(r2, t2)
+        # J[0:3, 1] = j2
 
-        t3 = self.H05[0:3, 3] - (self.H_01 @ self.H_12)[0:3, 3]
-        r3 = (self.H_01 @ self.H_12)[0:3, 2]
-        j3 = np.cross(r3, t3)
-        J[0:3, 2] = j3
+        # t3 = self.H05[0:3, 3] - (self.H_01 @ self.H_12)[0:3, 3]
+        # r3 = (self.H_01 @ self.H_12)[0:3, 2]
+        # j3 = np.cross(r3, t3)
+        # J[0:3, 2] = j3
 
-        t4 = self.H05[0:3, 3] - (self.H_01 @ self.H_12 @ self.H_23)[0:3, 3]
-        r4 = (self.H_01 @ self.H_12 @ self.H_23)[0:3, 2]
-        j4 = np.cross(r4, t4)
-        J[0:3, 3] = j4
+        # t4 = self.H05[0:3, 3] - (self.H_01 @ self.H_12 @ self.H_23)[0:3, 3]
+        # r4 = (self.H_01 @ self.H_12 @ self.H_23)[0:3, 2]
+        # j4 = np.cross(r4, t4)
+        # J[0:3, 3] = j4
 
-        t5 = self.H05[0:3, 3] - (self.H_01 @ self.H_12 @ self.H_23 @ self.H_34)[0:3, 3]
-        r5 = (self.H_01 @ self.H_12 @ self.H_23 @ self.H_34)[0:3, 2]
-        j5 = np.cross(r5, t5)
-        J[0:3, 4] = j5
+        # t5 = self.H05[0:3, 3] - (self.H_01 @ self.H_12 @ self.H_23 @ self.H_34)[0:3, 3]
+        # r5 = (self.H_01 @ self.H_12 @ self.H_23 @ self.H_34)[0:3, 2]
+        # j5 = np.cross(r5, t5)
+        # J[0:3, 4] = j5
+        J = np.zeros((5, 3))
+        T = np.stack(
+            [
+                dh_to_matrix(self.H_01),
+                dh_to_matrix(self.H_12),
+                dh_to_matrix(self.H_23),
+                dh_to_matrix(self.H_34),
+                dh_to_matrix(self.H_45),
+            ],
+            axis=0,
+        )
+
+        T_cumulative = [np.eye(4)]
+        for i in range(5):
+            T_cumulative.append(T_cumulative[-1] @ T[i])
+
+        d = T_cumulative[-1] @ np.vstack([0, 0, 0, 1])
+
+        # Calculate the robot points by applying the cumulative transformations
+        for i in range(0, 5):
+            T_i = T_cumulative[i]
+            z = T_i @ np.vstack([0, 0, 1, 0])
+            d1 = T_i @ np.vstack([0, 0, 0, 1])
+            r = np.array([d[0] - d1[0], d[1] - d1[1], d[2] - d1[2]]).flatten()
+            J[i] = np.cross(z[:3].flatten(), r.flatten())
+
         # offset_12 = self.H_12[0:3, 3]
         # r3 = r2 - offset_12
         # J[0:3, 2] = r3
