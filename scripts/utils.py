@@ -176,16 +176,25 @@ class FiveDOFRobot:
         # j5 = np.cross(r5, t5)
         # J[0:3, 4] = j5
         J = np.zeros((5, 3))
+        DH = [
+            [self.theta[0], self.l1, 0, -90],
+            [self.theta[1] - 90, 0, self.l2, 180],
+            [self.theta[2], 0, self.l3, 180],
+            [self.theta[3] + 90, 0, 0, 90],
+            [self.theta[4], self.l4 + self.l5, 0, 0],
+        ]
+
         T = np.stack(
             [
-                self.H_01,
-                self.H_12,
-                self.H_23,
-                self.H_34,
-                self.H_45,
+                dh_to_matrix(DH[0]),
+                dh_to_matrix(DH[1]),
+                dh_to_matrix(DH[2]),
+                dh_to_matrix(DH[3]),
+                dh_to_matrix(DH[4]),
             ],
             axis=0,
         )
+
 
         T_cumulative = [np.eye(4)]
         for i in range(5):
