@@ -107,11 +107,7 @@ class HiwonderRobot:
 
         bot.theta = self.joint_values[:-1]
         print(f"inverse jacobian: {bot.inverse_jacobian()}")
-        # thetalist_dot = np.rad2deg(bot.inverse_jacobian()) @ np.array(vel)
-
-        thetalist_dot = np.dot(np.array(vel), bot.inverse_jacobian())
-        thetalist_dot = np.append(thetalist_dot, 0.0)
-        # thetalist_dot = np.rad2deg(thetalist_dot)
+        thetalist_dot = (bot.inverse_jacobian()) @ np.array(vel)
 
         ######################################################################
 
@@ -122,7 +118,7 @@ class HiwonderRobot:
         print(f"[DEBUG] thetadot (deg/s) = {[round(td,2) for td in thetalist_dot]}")
 
         # Update joint angles
-        dt = 0.5  # Fixed time step
+        dt = 0.1  # Fixed time step
         K = 3200  # mapping gain for individual joint control
         new_thetalist = [0.0] * 6
 
